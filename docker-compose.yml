@@ -1,0 +1,27 @@
+version: '2.2'
+services:
+  EL:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+    container_name: es01
+    environment:
+      - discovery.type=single-node
+    # #   - cluster.name=es-docker-cluster
+    # #   - discovery.seed_hosts=es02,es03
+    # #   - cluster.initial_master_nodes=es01,es02,es03
+        # - bootstrap.memory_lock=true
+        # - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#     ulimits:
+#       memlock:
+#         soft: -1
+#         hard: -1
+#     # volumes:
+#     #    - /home/zhirnov-sa/Документы/документооборот:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+# networks:
+#   elastic:
+#     driver: bridge
+
+
+
+    # docker run -p 9200:9200 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.7.0
