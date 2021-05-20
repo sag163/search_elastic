@@ -1,66 +1,80 @@
 import os
 from pathlib import Path
 from pwd import getpwuid
-import time
-import sys
 from datetime import datetime as dt
-import re
+import datetime
+from datetime import datetime
+import getpass
+
+from parser import (
+    parser_default,
+    parser_xlxs,
+    parser_xlx,
+    parser_doc,
+    parser_rtf,
+)
+
 
 LVL_LOG = {
-        0: 'INFORMATION',
-        1: 'ERROR_READ__TO_FILE',
-        2: 'SUCCESS_READ__TO_FILE',
-        3: 'ERROR_WRITE__TO_ELASTICSEARCH',
-        4: 'SUCCESS_WRITE__TO_ELASTICSEARCH',
-        5: 'ERROR_READ_ERROR__TO_ELASTICSEARCH',
-        6: 'SUCCESS_READ_ERROR__TO_ELASTICSEARCH',
-    }
+    0: ["INFORMATION", 'INFO'],
+    1: ["ERROR", 'LOG_READ__TO_FILE'],
+    2: ["SUCCESS", 'LOG_READ__TO_FILE'],
+    3: ["ERROR", 'LOG_WRITE__TO_FILE'],
+    4: ["SUCCESS", 'LOG_WRITE__TO_FILE'],
+    5: ["ERROR", 'LOG_READ__TO_ES'],
+    6: ["SUCCESS", 'LOG_READ__TO_ES'],
+    7: ["ERROR", 'LOG_DELETE__TO_ES'],
+    8: ["SUCCESS", 'LOG_DELETE__TO_ES']
+}
 
 
+EXTENSIONS = {
+    ".doc": parser_doc,
+    ".docx": parser_doc,
+    ".xls": parser_xlx,
+    ".xlsx": parser_xlxs,
+    ".pdf": parser_doc,
+    ".txt": parser_default,
+    ".csv": parser_default,
+    ".fb2": parser_default,
+    ".rtf": parser_rtf,
+}
 
-def check_extension(name_file: str) -> bool:
-    '''Проверка допустимого расширения файла'''
-    extensions = ('.doc', '.docx', '.xls', '.xlsx', '.pdf', '.txt', '.csv', '.fb2',)
+
+def check_extension(name_file: str):
+    """Проверка допустимого расширения файла"""
     extension = Path(name_file).suffix
-    if extension in extensions:
-        return True
-    writelog(str(name_file), 1, text_error='Расширение файла не поддерживается')
-    return False
+    if extension in EXTENSIONS:
+        return EXTENSIONS[extension]
+    writelog(str(name_file), 1, text_error="Расширение файла не\
+    поддерживается")
+    return None
 
 
-def get_file_ownership(filename):
-    '''Получение информации о файле: дата_время последнего изменения, автор файла'''
-    time_modification_file = time.ctime(os.path.getmtime(filename))
+def get_file_ownership(filename: str) -> list:
+    """Получение информации о файле: дата_время последнего изменения,
+    автор файла, имя файла"""
+    unix_time = os.path.getatime(filename)
+    fileLastModified = datetime.utcfromtimestamp(unix_time).\
+        strftime('%d-%m-%Y %H:%M:%S')
     author = getpwuid(os.stat(filename).st_uid).pw_name
-    name = os.path.basename(filename)
-    
-    return [author, time_modification_file, name]
+    fileName = os.path.basename(filename)
+    fileSize = os.path.getsize(filename)
+    fileType = os.path.splitext(filename)[1]
+    return [author, fileLastModified, fileName, fileSize, fileType]
 
 
-def writelog(message: str, lvl: int,  text_error = '') -> None:
-    '''Функция для записи логов при чтении файлов, записи в elasticsearch и поиске в elasticsearch'''
-
-    log = dt.now().strftime("%d.%m.%Y  %H:%M:%S") + '  ' + message + ' ' + LVL_LOG[lvl] + \
-            '  ' + text_error + '\n'
+def writelog(message: list, lvl: int, text_error="нет") -> None:
+    """Функция для записи логов при чтении/удаление файлов, записи/поиске
+    в elasticsearch"""
+    name_file_log = LVL_LOG[lvl][1]
+    time = dt.now().strftime("%d.%m.%Y  %H:%M:%S")
+    log = f'{time}, текст: {message} Статус: {LVL_LOG[lvl][0]},\
+        Запрос выполнил: {getpass.getuser()}........... \
+            Ошибка: {text_error} "\n"'
     try:
-        log_file = open('logs/LOG_READ__TO_FILE', 'a')
+        log_file = open(f"logs/{name_file_log}", "a")
         log_file.write(log)
         log_file.close()
     except OSError:
         pass
-
-
-
-# string = '/home/zhirnov-sa/Документы/документооборот/search_elastic/test_book/1 Отбор.fb2'
-
-# base=os.path.basename(string)
-# name = os.path.splitext(base)
-# print(base)
-# print(name[0])
-# name_file = re.compile(r'/.* + .)')
-# mo = (name_file.search(string))
-# print(mo.group(0))
-
-
-
-

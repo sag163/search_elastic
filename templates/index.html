@@ -1,0 +1,36 @@
+
+{% block title %}Рецепты{% endblock %}
+
+{% load static %}
+{% csrf_token %}
+
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Рецепты</title>
+    <link rel="stylesheet" href="{% static 'pages/index.css' %}">
+</head>
+<body class="body">
+<header class="header">
+</header>
+    <main class="main container">
+        <div class="main__header">
+            <h1 class="main__title">Рецепты</h1>
+
+            </div>
+        <div class="card-list">
+        {% comment %} {% for recipe in page %}
+        {% include "recipe_item.html" %}
+        {% endfor %} {% endcomment %}
+    </div>
+        {% include "paginator.html"%}
+    </main>
+</body>
+</html>
+  
+    
